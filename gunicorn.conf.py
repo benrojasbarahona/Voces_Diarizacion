@@ -25,5 +25,7 @@ forwarded_allow_ips = '*'
 accesslog = '-'
 errorlog = '-'
 loglevel = os.getenv('LOG_LEVEL', 'info')
+# Sin socket de control (gunicornc): no se usa y evita escribir en $HOME.
+control_socket_disable = True
 if Path('/dev/shm').is_dir():
     worker_tmp_dir = '/dev/shm'

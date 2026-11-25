@@ -1,0 +1,41 @@
+# Publica la app en un Space de Hugging Face (Docker, gratis: 2 vCPU y 16 GB).
+# Requiere en GitHub → Settings → Secrets and variables → Actions:
+#   - secreto  HF_TOKEN : token de Hugging Face con permiso de escritura
+#   - variable HF_SPACE : <usuario>/<space>, por ejemplo benrojas/voces
+name: Publicar en Hugging Face
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: huggingface-space
+  cancel-in-progress: true
+
+jobs:
+  publicar:
+    if: vars.HF_SPACE != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Solo lo que necesita la imagen: sin data/ (audios grandes), evaluacion/ ni tests/.
+      - name: Preparar y subir el Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_SPACE: ${{ vars.HF_SPACE }}
+        run: |
+          set -euo pipefail
+          test -n "$HF_TOKEN" || { echo "Falta el secreto HF_TOKEN"; exit 1; }
+          destino="$(mktemp -d)"
+          cp -r Dockerfile .dockerignore gunicorn.conf.py requerimientos.txt requerimientos-produccion.txt src "$destino/"
+          mkdir -p "$destino/web"
+          cp -r web/index.html web/static "$destino/web/"
+          cp despliegue/huggingface/README.md "$destino/README.md"
+          cd "$destino"
+          git init -q -b main
+          git add -A
+          git -c user.name="github-actions" -c user.email="github-actions@users.noreply.github.com" \
+            commit -q -m "Publicar ${GITHUB_SHA::7} desde GitHub"
+          git push --force "https://${HF_SPACE%%/*}:${HF_TOKEN}@huggingface.co/spaces/${HF_SPACE}" main

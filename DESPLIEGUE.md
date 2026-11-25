@@ -15,6 +15,36 @@ Navegador ──(HTML/JS)──► Vercel
     └──(POST /api/diarizar, multipart, CORS)──► Render/Railway ─► gunicorn ─► Flask ─► diarización
 ```
 
+## 0. Opción gratuita recomendada: Hugging Face Spaces
+
+Un Space Docker gratuito («CPU basic») ofrece 2 vCPU y 16 GB de RAM sin
+tarjeta, y sirve la página y la API en la misma URL. Se duerme tras 48 h sin
+visitas y despierta al abrir la página (tarda uno o dos minutos).
+Alternativas gratuitas peores para este caso: Render Free (512 MB y 0,1 CPU,
+alcanza solo para audios de pocos minutos y muy lento), Railway (sin plan
+gratuito permanente).
+
+1. En huggingface.co: *New Space* → SDK **Docker** → plantilla *Blank* →
+   hardware **CPU basic (free)** → visibilidad **Public** (un Space privado
+   exige iniciar sesión a cada visitante).
+2. *Settings → Access Tokens* → token con permiso **Write**.
+3. En GitHub, *Settings → Secrets and variables → Actions*:
+   secreto `HF_TOKEN` (el token) y variable `HF_SPACE` (`<usuario>/<space>`).
+4. Haz merge a `main`. `.github/workflows/huggingface.yml` copia al Space solo
+   `Dockerfile`, `src/`, `web/`, los requerimientos y
+   `despliegue/huggingface/README.md` (sin `data/`, `evaluacion/` ni `tests/`),
+   y Hugging Face construye la imagen. Se repite en cada push a `main`; también
+   puede lanzarse a mano desde *Actions → Publicar en Hugging Face → Run workflow*.
+5. Abre `https://<usuario>-<space>.hf.space`: es la app completa. Comparte esa
+   URL directa (dentro de la página del Space va en un iframe y el micrófono
+   puede quedar bloqueado).
+
+Vercel es opcional: si quieres mantenerlo (también gratis), usa
+`API_BASE_URL=https://<usuario>-<space>.hf.space` en Vercel y, en *Settings →
+Variables* del Space, `CORS_ORIGINS=https://<tu-proyecto>.vercel.app`.
+
+## Arquitectura separada (Vercel + Render/Railway)
+
 El audio se envía directamente del navegador a la API: no pasa por Vercel, cuyas
 funciones limitan el tamaño del cuerpo y la duración de cada petición. La
 reproducción por tramos sigue usando la copia local del archivo en el navegador.
@@ -64,7 +94,7 @@ modelo y el audio en memoria. No subas `workers`; escala con más instancias.
 | `PORT` | lo asigna la plataforma | Puerto de gunicorn (8000 si falta). |
 | `CORS_ORIGINS` | `https://voces.vercel.app` | Orígenes autorizados, separados por comas, sin barra final. `*` autoriza cualquiera. |
 | `MAX_AUDIO_MB` | `100` | Límite de carga. |
-| `SERVIR_WEB` | `0` | `1` hace que el backend sirva también la página en `/`. |
+| `SERVIR_WEB` | `1` (imagen) | `1` sirve también la página en `/`; `0` deja solo la API. |
 | `GUNICORN_THREADS` | `4` | Hilos del único proceso. |
 | `GUNICORN_TIMEOUT` | `900` | Segundos. |
 

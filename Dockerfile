@@ -1,6 +1,7 @@
 # syntax=docker/dockerfile:1
-# Backend de diarización (Flask + gunicorn + FFmpeg) para Render, Railway o
-# cualquier servicio de contenedores. Escucha en $PORT (8000 por defecto).
+# Diarización (Flask + gunicorn + FFmpeg) para Hugging Face Spaces, Render,
+# Railway o cualquier servicio de contenedores. Escucha en $PORT (8000 por
+# defecto) y sirve la página y la API; SERVIR_WEB=0 deja solo la API.
 
 # ---------- Etapa de construcción: compila webrtcvad e instala dependencias ----------
 FROM python:3.12-slim AS build
@@ -20,13 +21,13 @@ FROM python:3.12-slim
 RUN apt-get update \
  && apt-get install -y --no-install-recommends ffmpeg \
  && rm -rf /var/lib/apt/lists/* \
- && useradd --create-home --uid 10001 app
+ && useradd --create-home --uid 1000 app
 ENV PATH=/opt/venv/bin:$PATH \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     NUMBA_CACHE_DIR=/tmp/numba_cache \
     PORT=8000 \
-    SERVIR_WEB=0 \
+    SERVIR_WEB=1 \
     MAX_AUDIO_MB=100
 WORKDIR /app
 COPY --from=build /opt/venv /opt/venv
