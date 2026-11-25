@@ -6,6 +6,9 @@ const speakerInput = $('num-speakers');
 const colors = ['#678d49', '#487e99', '#b08054', '#8976ae', '#b56c80', '#4f978b', '#c19a3a', '#5f6fb8'];
 let selected = null, previewUrl = null, report = null, speakerNames = [], segmentView = [], visibleSegments = 0, busy = false;
 const allowed = new Set(input.accept.split(','));
+// URL base de la API (web/static/config.js). Vacía = mismo origen que la página.
+const API_BASE_URL = String(window.VOCES_CONFIG?.API_BASE_URL || '').trim().replace(/\/+$/, '');
+const apiUrl = path => `${API_BASE_URL}${path}`;
 const formatSeconds = value => `${Number(value).toLocaleString('es-CL', {maximumFractionDigits: 2})} s`;
 function time(value) {
   const ms = Math.round(value * 1000);
@@ -35,6 +38,22 @@ function tickStep(duration, maxTicks = 8) {
   for (const step of [1, 2, 5, 10, 15, 30, 60, 120, 300, 600, 900, 1800, 3600, 7200]) if (duration / step <= maxTicks) return step;
   return 7200;
 }
+
+// ---------- Conexión con la API ----------
+// Con una API remota el audio sale del equipo: la página lo indica.
+if (!['localhost', '127.0.0.1', '[::1]'].includes(new URL(apiUrl('/'), location.href).hostname)) {
+  $('processing-label').textContent = 'Procesamiento en servidor';
+  $('processing-note').textContent = 'El audio se envía al servidor de análisis del proyecto.';
+}
+// Sincroniza el límite y los formatos con el servidor; de paso lo despierta si estaba en reposo.
+fetch(apiUrl('/api/config')).then(r => (r.ok ? r.json() : null)).then(config => {
+  if (!config) return;
+  if (Number.isInteger(config.max_mb) && config.max_mb > 0) { form.dataset.maxMb = String(config.max_mb); $('max-mb').textContent = config.max_mb; }
+  if (Array.isArray(config.formatos) && config.formatos.length) {
+    allowed.clear(); for (const ext of config.formatos) allowed.add(ext);
+    input.accept = config.formatos.join(',');
+  }
+}).catch(() => {});
 
 // ---------- Reproductor de tramos ----------
 const player = {

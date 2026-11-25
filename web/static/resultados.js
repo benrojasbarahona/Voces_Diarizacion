@@ -193,12 +193,12 @@ form.addEventListener('submit', async e => {
   try {
     const body = new FormData(); body.append('audio', selected);
     if (speakerCount) body.append('num_speakers', speakerCount);
-    const response = await fetch('/api/diarizar', {method:'POST', body});
+    const response = await fetch(apiUrl('/api/diarizar'), {method:'POST', body});
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'No se pudo analizar el audio.');
     render(data);
   } catch (err) {
-    error(err instanceof TypeError || err instanceof SyntaxError ? 'No se pudo conectar con el servidor. Comprueba que sigue abierto e inténtalo de nuevo.' : err.message);
+    error(err instanceof TypeError || err instanceof SyntaxError ? 'No se pudo conectar con el servidor de análisis. Comprueba tu conexión e inténtalo de nuevo en unos segundos.' : err.message);
     $('empty-results').hidden = false;
   } finally {
     clearInterval(timer); busy = false; input.disabled = false; setControlsBusy(false); $('analyze').disabled = !selected;

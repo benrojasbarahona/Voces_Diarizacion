@@ -15,7 +15,6 @@ import librosa
 import numpy as np
 import webrtcvad
 import soundfile as sf
-from resemblyzer import VoiceEncoder
 
 from agrupamiento import MAX_REFERENCIAS, _agrupar, _centros, _entero_positivo
 from reporte import _estadisticas, _linea_tiempo, _nombres, _paso_tramos, _reporte
@@ -108,6 +107,9 @@ def estimar_num_hablantes(embeddings, max_speakers=None, umbral_distancia=0.15):
 def _encoder(motor="eres2net"):
     # Reutilizar pesos al analizar otro audio desde el menú.
     if motor == "resemblyzer":
+        # Importación diferida: Resemblyzer carga PyTorch (cientos de MB de RAM)
+        # y el motor predeterminado no lo necesita.
+        from resemblyzer import VoiceEncoder
         return VoiceEncoder(verbose=False)
     from modelo_voz import EncoderERes2Net
     return EncoderERes2Net()

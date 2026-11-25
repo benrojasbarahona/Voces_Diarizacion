@@ -1,0 +1,19 @@
+# Blueprint de Render: New > Blueprint y selecciona este repositorio.
+services:
+  - type: web
+    name: voces-diarizacion-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    # Elige un plan con al menos 2 GB de RAM: librosa, sherpa-onnx y el audio
+    # decodificado no caben con holgura en 512 MB.
+    plan: standard
+    healthCheckPath: /api/salud
+    autoDeploy: true
+    envVars:
+      # Dominio(s) del frontend en Vercel, separados por comas.
+      - key: CORS_ORIGINS
+        sync: false
+      - key: MAX_AUDIO_MB
+        value: "100"
+      - key: SERVIR_WEB
+        value: "0"

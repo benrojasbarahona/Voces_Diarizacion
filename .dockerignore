@@ -1,0 +1,20 @@
+# Solo src/, web/, gunicorn.conf.py y los requerimientos entran en la imagen.
+.git
+.github
+.venv
+.env
+**/__pycache__
+**/*.pyc
+.DS_Store
+data/
+evaluacion/
+tests/
+modelos/
+web/dist/
+web/scripts/
+web/vercel.json
+Tiempo_audios.xlsx
+~$*.xlsx
+render.yaml
+railway.json
+*.md

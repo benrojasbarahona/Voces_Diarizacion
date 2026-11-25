@@ -122,7 +122,7 @@ async function wavFile(blob) {
 async function startRecording() {
   if (busy || recording || requestingMicrophone || processingRecording) return;
   if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
-    error('Tu navegador no permite grabar desde esta página. Usa http://127.0.0.1:8000/ o sube un archivo.');
+    error('Tu navegador no permite grabar desde esta página. Ábrela con HTTPS (o en http://127.0.0.1) o sube un archivo.');
     return;
   }
   requestingMicrophone = true; setControlsBusy(false); error('');

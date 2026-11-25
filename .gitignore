@@ -6,3 +6,4 @@ modelos/*.part
 .venv/
 .DS_Store
 ~$*.xlsx
+web/dist/
