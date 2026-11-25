@@ -80,11 +80,15 @@ curl -F "audio=@data/audio1.wav" http://localhost:8000/api/diarizar
 ## 2. Frontend (Vercel)
 
 1. *Add New → Project*, importa el repositorio.
-2. **Root Directory: `web`**. `web/vercel.json` ya define el comando de
-   construcción (`node scripts/construir.mjs`) y la salida (`dist`).
+2. Root Directory: déjalo vacío (raíz del repositorio, usa `vercel.json`) o
+   pon `web` (usa `web/vercel.json`). Ambos construyen con
+   `scripts/construir.mjs` y publican `web/dist/`. No configures *Build
+   Command* ni *Output Directory* en el panel: los toma de esos archivos.
 3. Variable de entorno **`API_BASE_URL=https://<tu-api>.onrender.com`** (o el
    dominio de Railway), sin barra final, para Production y Preview.
 4. Despliega y añade el dominio resultante a `CORS_ORIGINS` del backend.
+5. El dominio de producción (`<proyecto>.vercel.app`) sirve la rama `main`;
+   las ramas y los PR se publican en URL de *preview*.
 
 `scripts/construir.mjs` copia la página a `dist/` y escribe
 `static/config.js` con `API_BASE_URL`. Falla si la variable falta o no usa
