@@ -1,0 +1,3 @@
+# Dependencias del servidor en producción (Docker / Render / Railway).
+-r requerimientos.txt
+gunicorn>=23,<28

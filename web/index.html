@@ -5,13 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#172d2a">
   <title>Voces · Diarización de audio</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
-  <script src="{{ url_for('static', filename='controles.js') }}" defer></script>
-  <script src="{{ url_for('static', filename='resultados.js') }}" defer></script>
+  <link rel="stylesheet" href="/static/styles.css">
+  <!-- config.js define API_BASE_URL; en Vercel lo genera web/scripts/construir.mjs -->
+  <script src="/static/config.js" defer></script>
+  <script src="/static/app.js" defer></script>
+  <script src="/static/controles.js" defer></script>
+  <script src="/static/resultados.js" defer></script>
 </head>
 <body>
-  <header class="topbar"><a class="brand" href="/" aria-label="Voces, inicio"><span class="brand-icon" aria-hidden="true">ııı</span> voces<span class="brand-dot">.</span></a><span class="local-badge"><i></i> Procesamiento local</span></header>
+  <header class="topbar"><a class="brand" href="/" aria-label="Voces, inicio"><span class="brand-icon" aria-hidden="true">ııı</span> voces<span class="brand-dot">.</span></a><span class="local-badge" id="processing-badge"><i></i> <span id="processing-label">Procesamiento local</span></span></header>
   <main>
     <section class="intro">
       <div><p class="eyebrow">ESCUCHAR · DISTINGUIR · ENTENDER</p><h1>Cada voz tiene<br>su lugar.</h1><p class="lead">Descubre quién habla, cuándo interviene y cuánto participa. Empieza con una grabación.</p></div>
@@ -19,15 +21,15 @@
     </section>
     <section class="panel upload-panel" aria-labelledby="upload-title">
       <div class="section-title"><span class="step">01</span><div><h2 id="upload-title">Tu grabación</h2><p id="source-description">Sube un audio o grábalo ahora para comenzar el análisis.</p></div><span class="tag">SOLO AUDIO</span></div>
-      <form id="audio-form" data-max-mb="{{ max_mb }}">
+      <form id="audio-form" data-max-mb="200">
         <div class="source-tabs" role="group" aria-label="Origen del audio">
           <button type="button" id="upload-tab" class="source-tab active" aria-pressed="true">↥ <span>Subir archivo</span></button>
           <button type="button" id="record-tab" class="source-tab" aria-pressed="false">♩ <span>Grabar ahora</span></button>
         </div>
         <label class="dropzone" id="dropzone" for="audio-input">
           <span class="upload-icon" aria-hidden="true">↥</span><strong id="file-title">Arrastra tu audio aquí</strong><span id="file-subtitle">o <u>selecciona un archivo de tu equipo</u></span>
-          <small>MP3, M4A, WAV, OGG, FLAC y más · Hasta {{ max_mb }} MB</small>
-          <input type="file" id="audio-input" name="audio" accept="{{ formatos }}" aria-label="Seleccionar archivo de audio">
+          <small>MP3, M4A, WAV, OGG, FLAC y más · Hasta <span id="max-mb">200</span> MB</small>
+          <input type="file" id="audio-input" name="audio" accept=".aac,.aax,.ac3,.aif,.aifc,.aiff,.alac,.amr,.ape,.au,.caf,.dff,.dsf,.flac,.m4a,.m4b,.mka,.mp2,.mp3,.oga,.ogg,.opus,.snd,.tak,.tta,.w64,.wav,.wave,.wma,.wv" aria-label="Seleccionar archivo de audio">
         </label>
         <div id="record-panel" class="record-panel" hidden>
           <div id="record-idle" class="record-idle">
@@ -51,7 +53,7 @@
           </div>
           <p id="speaker-help" class="speaker-help">Déjalo en Automático si no lo sabes; el programa estimará la cantidad.</p>
         </div>
-        <div class="form-bottom"><p><span aria-hidden="true">↳</span> El análisis se realiza en tu equipo.<br><span class="subtle">La copia de trabajo se elimina al terminar.</span></p><button type="submit" id="analyze" disabled>Diarizar audio <span aria-hidden="true">↗</span></button></div>
+        <div class="form-bottom"><p><span aria-hidden="true">↳</span> <span id="processing-note">El análisis se realiza en tu equipo.</span><br><span class="subtle">La copia de trabajo se elimina al terminar.</span></p><button type="submit" id="analyze" disabled>Diarizar audio <span aria-hidden="true">↗</span></button></div>
       </form>
       <div id="progress" class="progress" hidden role="status"><span class="spinner" aria-hidden="true"></span><div><strong>Estamos distinguiendo las voces…</strong><p id="elapsed">Puede tardar según la duración del audio. Mantén esta página abierta.</p></div></div>
       <p id="error" class="error" role="alert" hidden></p>

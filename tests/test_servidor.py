@@ -1,12 +1,14 @@
 """Contrato JSON, validación de cargas y limpieza de archivos temporales."""
 import io
 from pathlib import Path
+import re
 import sys
 import unittest
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'src'))
-from servidor import crear_app
+from servidor import ROOT, crear_app
+from diarizacion import EXTENSIONES_AUDIO
 
 
 class ServidorTests(unittest.TestCase):
@@ -35,6 +37,57 @@ class ServidorTests(unittest.TestCase):
             self.assertEqual(recurso.status_code, 200)
         with self.client.get('/static/controles.js') as recurso:
             self.assertEqual(recurso.status_code, 200)
+        with self.client.get('/static/config.js') as recurso:
+            self.assertEqual(recurso.status_code, 200)
+            self.assertIn(b"API_BASE_URL: ''", recurso.data)
+
+    def test_pagina_estatica_sin_plantillas(self):
+        # La misma página se publica en Vercel sin Flask: no debe llevar Jinja
+        # y su lista de formatos debe coincidir con la del análisis.
+        html = (ROOT / 'web/index.html').read_text(encoding='utf-8')
+        self.assertNotIn('{{', html)
+        self.assertNotIn('{%', html)
+        accept = re.search(r'id="audio-input"[^>]*accept="([^"]+)"', html).group(1)
+        self.assertEqual(set(accept.split(',')), set(EXTENSIONES_AUDIO))
+
+    def test_salud_y_configuracion(self):
+        self.assertEqual(self.client.get('/api/salud').json, {'estado': 'ok'})
+        config = self.client.get('/api/config').json
+        self.assertEqual(config['max_mb'], self.app.config['MAX_AUDIO_MB'])
+        self.assertEqual(config['formatos'], sorted(EXTENSIONES_AUDIO))
+        self.assertFalse(config['analisis_en_curso'])
+        r = self.client.get('/api/no-existe')
+        self.assertEqual(r.status_code, 404)
+        self.assertIn('error', r.json)
+        self.assertEqual(self.client.get('/api/diarizar').status_code, 405)
+
+    def test_cors(self):
+        app = crear_app({'TESTING': True, 'CORS_ORIGINS': 'https://voces.vercel.app/, https://otro.example'})
+        client = app.test_client()
+        permitido = {'Origin': 'https://voces.vercel.app'}
+        r = client.get('/api/config', headers=permitido)
+        self.assertEqual(r.headers['Access-Control-Allow-Origin'], 'https://voces.vercel.app')
+        self.assertIn('Origin', r.headers['Vary'])
+        previa = client.options('/api/diarizar', headers={**permitido, 'Access-Control-Request-Method': 'POST'})
+        self.assertEqual(previa.status_code, 200)
+        self.assertIn('POST', previa.headers['Access-Control-Allow-Methods'])
+        r = client.post('/api/diarizar', headers=permitido)
+        self.assertEqual(r.status_code, 400)
+        self.assertEqual(r.headers['Access-Control-Allow-Origin'], 'https://voces.vercel.app')
+        r = client.get('/api/config', headers={'Origin': 'https://ajeno.example'})
+        self.assertNotIn('Access-Control-Allow-Origin', r.headers)
+        # Sin CORS_ORIGINS (uso local, mismo origen) no se autoriza a nadie más.
+        r = self.client.get('/api/config', headers=permitido)
+        self.assertNotIn('Access-Control-Allow-Origin', r.headers)
+        abierto = crear_app({'TESTING': True, 'CORS_ORIGINS': '*'}).test_client()
+        r = abierto.get('/api/salud', headers={'Origin': 'https://cualquiera.example'})
+        self.assertEqual(r.headers['Access-Control-Allow-Origin'], 'https://cualquiera.example')
+
+    def test_solo_api(self):
+        client = crear_app({'TESTING': True, 'SERVIR_WEB': '0'}).test_client()
+        self.assertEqual(client.get('/').status_code, 404)
+        self.assertEqual(client.get('/static/app.js').status_code, 404)
+        self.assertEqual(client.get('/api/salud').status_code, 200)
 
     def test_validaciones(self):
         self.assertEqual(self.client.post('/api/diarizar').status_code, 400)

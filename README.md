@@ -112,6 +112,14 @@ MAX_AUDIO_MB=200
 
 Reinicia el servidor después de cambiar estos valores. La configuración predeterminada está pensada para uso local.
 
+## Despliegue en producción
+
+La API puede ejecutarse en un contenedor (Render, Railway o Docker) con
+`gunicorn -c gunicorn.conf.py`, y la página publicarse en Vercel apuntando a
+esa API mediante `API_BASE_URL`. En ese caso el audio se envía al servidor de
+análisis, y la página lo indica. Los pasos, las variables de entorno y las
+comprobaciones están en [DESPLIEGUE.md](DESPLIEGUE.md).
+
 ## Formatos de audio
 
 Se admiten formatos como WAV, MP3, M4A, OGG, FLAC y AAC, entre otros, según los códecs disponibles.
@@ -144,11 +152,18 @@ Proyecto_Diarizacion/
 │   ├── menu.py             # Interfaz de consola
 │   └── servidor.py         # Servidor web y API
 ├── web/
-│   ├── templates/
-│   │   └── index.html
+│   ├── index.html          # Página estática (Flask o Vercel)
+│   ├── vercel.json         # Configuración del frontend en Vercel
+│   ├── scripts/construir.mjs  # Genera dist/ con API_BASE_URL
 │   └── static/
+│       ├── config.js       # URL base de la API
 │       ├── styles.css
-│       └── app.js
+│       ├── app.js
+│       ├── controles.js
+│       └── resultados.js
+├── Dockerfile             # Imagen del backend para producción
+├── gunicorn.conf.py
+├── render.yaml / railway.json
 ├── data/                  # Audios del menú y corpus de prueba documentado
 │   ├── README.md
 │   └── Audios de prueba/
